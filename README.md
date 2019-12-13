@@ -1,6 +1,6 @@
 # Le long de la route BR-163
 
-This repo contains the source code of the article available at : 
+This repo contains the source code of the article available at : https://ateliercartographie.github.io/BR163/
 
 ## Running locally
 
