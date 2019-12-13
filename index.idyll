@@ -1,4 +1,5 @@
 [meta title:"Le long de la route BR-163" description:"Un axe de la déforestation en Amazonie brésilienne" /]
+[Analytics google:"UA-78393617-4"]
 
 // Liste des images utilisées dans la carte
 [var name:"imgList" value:`["0-text-layer.png",
