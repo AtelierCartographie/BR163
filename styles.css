@@ -1,0 +1,243 @@
+:root {
+  --fontSize: 1.8rem;
+  --lineHeight: 2.8rem;
+}
+@media (max-width: 800px) {
+  :root {
+    --fontSize: 1.5rem;
+    --lineHeight: 2.4rem;
+  }
+}
+/* Overwrite default container width
+and change breakpoint to mobile */
+.idyll-text-container {
+  max-width: 740px;
+  margin: 0 auto;
+}
+
+@media (max-width: 800px) {
+  .idyll-text-container {
+    max-width: calc(100% - 1em);
+    margin: 0 1em;
+  }
+}
+
+/* Set font size for body and title.
+Use rem and set 1rem = 10px with 62.5% */
+html {
+  font-size: 62.5%;
+}
+body {
+  font-family: "Noto Serif";
+  font-size: var(--fontSize);
+  line-height: var(--lineHeight);
+  background-color: black;
+  color: rgba(255,255,255,0.8);
+}
+p {
+  margin-bottom: calc(var(--fontSize) * (120 / 100));
+}
+a {
+  color: #dd871f;
+}
+.byline > a:link {
+  color: inherit;
+  text-decoration: none;
+}
+.byline > a:hover {
+  text-decoration: underline;
+  color: rgb(255,255,255)
+}
+
+h3 {
+  font-family: "Noto Sans";
+  font-size: calc(var(--fontSize) * (114 / 100));
+}
+
+h2 {
+  font-family: "Bungee";
+  font-size: calc(var(--fontSize) * (114 / 100));
+}
+
+h1.hed {
+  font-family: "Bungee Outline";
+  font-size: calc(var(--fontSize) * (240 / 100));
+  opacity: 0.9;
+}
+
+h2.dek {
+  font-weight: normal;
+  font-size: var(--fontSize);
+  opacity: 0.9;
+}
+
+/* VEGA-LITE --------------- */
+/* text size of vega-lite graphics */
+.mark-text > text {
+  font-family: "Noto Serif" !important;
+  font-size: calc(var(--fontSize) / (120 / 100)) !important;
+  fill: rgba(255,255,255,0.8) !important;
+}
+@media (max-width: 800px) {
+  .mark-text.role-mark.layer_1_marks > text {
+    fill: transparent !important;
+  }
+}
+/* Smaller width of line graphic on desktop */
+.vl-line {
+  /* margin: 0 auto; */
+  width: 50%;
+}
+@media (max-width: 800px) {
+  .vl-line {
+    width: 100%;
+  }
+}
+
+/* Styling header */
+.article-header {
+  background-image: url("images/BR163-light.jpg");
+  background-color: #ffe0c2;
+  background-blend-mode: multiply;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  height: 100vh;
+  padding: 70vh 0 0 0;
+}
+
+@media (max-width: 800px) {
+  .article-header {
+    padding: 30vh 0 0 0;
+  }
+}
+
+.article-header a {
+  color: inherit;
+}
+
+
+/* Scroller text --------------- */
+/* Styling text step overlaying map */
+.idyll-scroll-text .idyll-step {
+  border: none;
+  box-shadow: none;
+  background: rgba(0, 0, 0, 0.8);
+  margin: 80vh 0 80vh 0;
+  padding: 25px;
+}
+.idyll-scroll-text .idyll-step:first-child {
+  margin: 0;
+}
+@media (max-width: 800px) {
+  .idyll-scroll-text .idyll-step {
+    padding: 15px;
+  }
+}
+.idyll-step.hide {
+  background: none;
+}
+
+/* small rectangle for loss tree legend */
+.legend {
+  display: inline-block;
+  width: 1.5em;
+  height: 1em;
+}
+
+/* small line for line chart legend */
+.legend-line {
+  display: inline-block;
+  width: 1.5em;
+  height: 0.3em;
+}
+
+figure {
+  background-color: rgba(0, 0, 0, 0);
+  margin: 0;
+}
+figcaption {
+  color: rgb(150,150,150);
+  font-family: "Noto Sans";
+  /* font-size: calc(var(--fontSize) / (120 / 100));
+  line-height: calc(var(--fontSize) / (80 / 100)); */
+  padding-top: 0.5em;
+}
+video {
+  max-width: 100%;
+}
+
+/* Scroller layout and graphics --------------- */
+/* Overwrite margin before scroller */
+.idyll-scroll {
+  margin-top: 5em;
+}
+.idyll-scroll-graphic > div > div {
+  overflow: hidden;
+  height: 100vh;
+}
+
+.basemap {
+  transition-duration: 1.5s;
+  transition-timing-function: ease-in-out;
+  width: 2048px;
+  height: 4376px;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-size: 2048px 4376px;
+  transform-origin: top left;
+}
+
+.cartouche {
+  position: fixed;
+  bottom: 1.5em;
+  right: 1.5em;
+  width: 160px;
+  height: 160px;
+}
+@media (max-width: 800px) {
+  .cartouche {
+    bottom: 0px;
+    right: 0px;
+    width: 130px;
+    height: 130px;
+  }
+}
+
+.scale {
+  position: fixed;
+  top: 50%;
+  left: 0.2em;
+  background-color: rgba(0,0,0,0);
+  transform-origin: top left;
+  transition-duration: 1.5s;
+  transition-timing-function: ease-in-out;
+}
+.scale svg {
+  width: 30px;
+  height: 445px;
+}
+
+.logo svg {
+  width: 80%;
+}
+
+/* Footer ---------------  */
+footer {
+  margin-top: 10em;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: calc(var(--fontSize) / (120 / 100));
+}
+footer div {
+  flex: 1;
+}
+footer div:nth-child(1) {
+  flex: 2;
+}
+footer ul {
+  list-style: none;
+}
+footer a {
+  color: inherit;
+}
