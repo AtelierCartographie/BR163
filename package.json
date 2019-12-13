@@ -6,6 +6,7 @@
     "theme": "default",
     "layout": "centered",
     "css": "styles.css",
+    "output": "docs",
     "authorView": false,
     "googleFonts": [
       "Bungee",
