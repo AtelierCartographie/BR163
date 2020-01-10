@@ -18,6 +18,10 @@
 
 // Url des images à utiliser comme background
 [derived name:"imgUrl" value:`imgLink.map( x => "url(" + x + ")" )` /]
+
+// Initialise le scroll progress  à 0
+[var name:"scrollprogress" value:0 /]
+
 // Initialise les étapes (step) du scroller à 0
 [var name:"scrollA" value:0 /]
 // Tableau pour afficher les couches supplémentaires quand nécessaire. 1 cellule du tableau = 1 step
@@ -44,23 +48,30 @@
 // de chaque étape       [s00, s01, s02, s03, s04, s05, s06, s07, s08, s09, s10, s11, s12, s13, s14, s15, s16]
 [var name:"scale" value:`[1.8, 1.8, 1.6, 1.6, 1.6, 1.6, 1.6, 1.6, 1.6, 1.6, 1.6, 2.4, 2.4, 1.6, 1.4, 1.4, 1.4]` /]
 
+// progress value between step for scale
+[derived name:"scalep" value:`scale.map( (x, i) => x + scrollprogress * (scale[i+1] - x) )` /]
+
 // Points d'intérêts sur lesquels la carte doit être centrée au cours des étapes
 // coordonnées points   [ step 0 , step 1 , step 2 , step 3 , step 4 , step 5 , step 6 , step 7 , step 8 , step 9 , step 10,step 11,step 12,step 13,step 14,step 15]
-[var name:"locX" value:`["-70.7%","-58.6%","-53.5%","-23.0%","-18.8%","-18.8%","-18.8%","-18.8%","-18.8%","-18.8%","-18.8%","-9.3%","-9.3%","-18.9%","-18.9%","-18.9%","-18.9%"]` /]
-[var name:"locY" value:`["-06.6%","-17.1%","-27.7%","-27.0%","-40.0%","-53.2%","-64.6%","-64.6%","-64.6%","-64.6%","-64.6%","-77.9%","-77.9%","-82.4%","-82.4%","-82.4%","-82.4%"]` /]
+[var name:"locX" value:`[-70.7,-58.6,-53.5,-23.0,-18.8,-18.8,-18.8,-18.8,-18.8,-18.8,-18.8,-9.3,-9.3,-18.9,-18.9,-18.9,-18.9]` /]
+[var name:"locY" value:`[-6.6,-17.1,-27.7,-27.0,-40.0,-53.2,-64.6,-64.6,-64.6,-64.6,-64.6,-77.9,-77.9,-82.4,-82.4,-82.4,-82.4]` /]
+
+// progress value between step for location
+[derived name:"locXp" value:`locX.map( (x, i) => x + scrollprogress * (locX[i+1] - x) )` /]
+[derived name:"locYp" value:`locY.map( (y, i) => y + scrollprogress * (locY[i+1] - y) )` /]
 
 // Valeurs de translation pour que les points d'intérêts se retrouvent aux centre de l'écran
 // d'abord se décaler de la valeur des coordonnées des points (locX et locY)
 // puis ajouter la moitié du viewport pour décaler du bord de l'écran vers le centre
-// enfin annuler l'effet de zoomle sur le viewport car par défaut en CSS transform applique l'échelle à la translation
+// enfin annuler l'effet de zoom sur le viewport car par défaut en CSS transform applique l'échelle à la translation
 // sans compensation du zoom calc(-70.7% + 50vw) => ex: si scale(2) le décalage du viewport est doublé
 // avec compensation du zoom calc(-70.7% + (50vw / 1.6)) => annule le décalage du viewport
-[derived name:"translateX" value:`locX.map( (x, i) => "calc(" + x + " + (50vw / " + scale[i] + "))" )` /]
-[derived name:"translateY" value:`locY.map( (y, i) => "calc(" + y + " + (50vh / " + scale[i] + "))" )` /]
+[derived name:"translateX" value:`locXp.map( (x, i) => "calc(" + x + "%" + " + (50vw / " + scalep[i] + "))" )` /]
+[derived name:"translateY" value:`locYp.map( (y, i) => "calc(" + y + "%" + " + (50vh / " + scalep[i] + "))" )` /]
 
 // Valeurs à appliquer de la propriété CSS transform
 // ex: "scale(1.6) translate(calc(-70.7% + (50vw / 1.6)), calc(-6.6% + (50vh / 1.6)))"
-[derived name:"transformValue" value:`scale.map( (x, i) => "scale(" + x + ") " + "translate(" + translateX[i] + "," + translateY[i] + ")" )` /]
+[derived name:"transformValue" value:`scalep.map( (x, i) => "scale(" + x + ") " + "translate(" + translateX[i] + "," + translateY[i] + ")" )` /]
 
 [Header
   fullWidth:true
@@ -70,7 +81,8 @@
   authorLink:"https://www.sciencespo.fr/cartographie"
   date:"23 décembre 2019"
   color:"white"
-   /]
+  byLineTemplate:`{prefix: ''}`
+  /]
 
 
    La forêt amazonienne est un foyer majeur de biodiversité dans le monde. Bien qu’elle soit la plus grande forêt tropicale protégée, même partiellement, elle subit depuis plus de 40 ans d’importantes dégradations causées par les activités humaines.
@@ -81,140 +93,160 @@
 
    Dans cet article dit « long format », nous suivons cette route BR-163 afin de montrer l’ampleur de la déforestation récente et en cours. La trame cartographique du récit mobilise en partie les travaux du projet « Global Forest Change » de l'Université du Maryland.
 
-[Scroller currentStep:scrollA]
+[Scroller currentStep:scrollA progress:scrollprogress]
   [Graphic]
     [div fullWidth:true style:`{
       backgroundImage: imgUrl[0] + "," + layer[scrollA] + imgUrl[1],
-      transform: transformValue[scrollA]
+      transform: transformValue[scrollA],
       }` className:"basemap" ]
     [/div]
-    [svg className:"scale" style:`{transform: "scale(" + scale[scrollA] + ") translate(0,-50%)"}` src:"static/images/scale.svg" /]
+    [svg className:"scale" style:`{transform: "scale(" + scalep[scrollA] + ") translate(0,-50%)"}` src:"static/images/scale.svg" /]
     [svg className:"cartouche" src:"static/images/cartouche.svg" /]
+    console.log(progress)
   [/Graphic]
 
   [Step]
-    // Step 0
-    Santarém, située sur l’Amazone et à proximité de son affluent le rio Tapajós, est une ville portuaire de l’État du Pará. Elle compte près de 30 000 habitants.
+    [div className:"step-text"]
+      // Step 0
+      Santarém, située sur l’Amazone et à proximité de son affluent le rio Tapajós, est une ville portuaire de l’État du Pará. Elle compte près de 30 000 habitants.
 
-    En 2003, le géant américain de l’agroalimentaire Cargill termine la construction d’un terminal au port de Santarém. Cette infrastructure privée est agrandie en 2015, attestant au passage de l'intérêt économique de la région et de la route BR-163 qui la traverse.
+      En 2003, le géant américain de l’agroalimentaire Cargill termine la construction d’un terminal au port de Santarém. Cette infrastructure privée est agrandie en 2015, attestant au passage de l'intérêt économique de la région et de la route BR-163 qui la traverse.
 
-    5 millions de tonnes de grains de maïs et de soja transitent chaque année par ce terminal. 114 milliers y sont stockées. Ces récoltes arrivent par voie navigable ou par camion, pour ensuite être acheminées, par barge, sur l’Amazone puis déboucher sur l’Océan Atlantique et les marchés mondiaux de l’alimentation animale. Ce développement récent du port fait de Santarém une étape importante pour l'exportation des céréales brésiliennes.
+      5 millions de tonnes de grains de maïs et de soja transitent chaque année par ce terminal. 114 milliers y sont stockées. Ces récoltes arrivent par voie navigable ou par camion, pour ensuite être acheminées, par barge, sur l’Amazone puis déboucher sur l’Océan Atlantique et les marchés mondiaux de l’alimentation animale. Ce développement récent du port fait de Santarém une étape importante pour l'exportation des céréales brésiliennes.
 
-    [br/]
-    [figure]
-      [img src:'static/images/Cargill-Santarem.jpg' /]
-      [figcaption]*Terminal de Cargill dans le port de Santarém en 2007. Crédit : [Sara y Tzunki](https://flic.kr/p/EuL8v), CC-BY-NC*[/figcaption]
-    [/figure]
+      [br/]
+      [figure]
+        [img src:'static/images/Cargill-Santarem.jpg' /]
+        [figcaption]*Terminal de Cargill dans le port de Santarém en 2007. Crédit : [Sara y Tzunki](https://flic.kr/p/EuL8v), CC-BY-NC*[/figcaption]
+      [/figure]
+    [/div]
   [/Step]
 
   [Step]
-    // Step 1
-    En matière de politiques publiques, ce développement de l'agro-business prime souvent sur la préservation de la forêt amazonienne. Par exemple, l'État fédéral brésilien propose des avantages fiscaux pour s’installer en Amazonie. De même, en 2004, le président Lula annonce l’asphaltage de la route, ce qui entraîne le développement de routes secondaires.
-    De grandes fermes se multiplient alors le long de la route et la déforestation s’accélère... en dépit de la proximité voire l’intégration de ces espaces dans des aires protégées [span className:"legend" style:`{background: 'repeating-linear-gradient(-45deg, rgba(255,255,255,0.4), rgba(255,255,255,0.5) 1px, transparent 1px, transparent 6px)'}`][/span] et des réserves indigènes [span className:"legend" style:`{background:'rgba(239, 124, 0, 0.5)'}`][/span].
-
+    [div className:"step-text"]
+      // Step 1
+      En matière de politiques publiques, ce développement de l'agro-business prime souvent sur la préservation de la forêt amazonienne. Par exemple, l'État fédéral brésilien propose des avantages fiscaux pour s’installer en Amazonie. De même, en 2004, le président Lula annonce l’asphaltage de la route, ce qui entraîne le développement de routes secondaires.
+      De grandes fermes se multiplient alors le long de la route et la déforestation s’accélère... en dépit de la proximité voire l’intégration de ces espaces dans des aires protégées [span className:"legend" style:`{background: 'repeating-linear-gradient(-45deg, rgba(255,255,255,0.4), rgba(255,255,255,0.5) 1px, transparent 1px, transparent 6px)'}`][/span] et des réserves indigènes [span className:"legend" style:`{background:'rgba(239, 124, 0, 0.5)'}`][/span].
+    [/div]
   [/Step]
 
   [Step]
-    // Step 2
-    Dès les premiers kilomètres après Santarém, l’on observe les liens entre les activités anthropiques (déforestation) et la route BR-163.
+    [div className:"step-text"]
+      // Step 2
+      Dès les premiers kilomètres après Santarém, l’on observe les liens entre les activités anthropiques (déforestation) et la route BR-163.
 
-    Sur ces images satellites, on distingue les forêts préservées (aires protégées et territoires indigènes) des nombreuses parcelles défrichées (en forme « d'arêtes de poissons »).
+      Sur ces images satellites, on distingue les forêts préservées (aires protégées et territoires indigènes) des nombreuses parcelles défrichées (en forme « d'arêtes de poissons »).
 
-    Cette déforestation s’accentue dans la région de Rurópolis où la route devient commune avec la Transamazonienne (BR-230). Cet autre axe majeur, qui relie l’Océan Atlantique à Jão Pessoa au Pérou, favorise lui aussi la déforestation.
-
+      Cette déforestation s’accentue dans la région de Rurópolis où la route devient commune avec la Transamazonienne (BR-230). Cet autre axe majeur, qui relie l’Océan Atlantique à Jão Pessoa au Pérou, favorise lui aussi la déforestation.
+    [/div]
   [/Step]
 
   [Step]
-    // Step 3
-    La route BR-163 se sépare de la Transamazonienne à proximité du port de Mirituba. Comme Santarém, Mirituba est une étape importante pour le transit des céréales et les bois précieux hors de de la forêt amazonienne.
+    [div className:"step-text"]
+      // Step 3
+      La route BR-163 se sépare de la Transamazonienne à proximité du port de Mirituba. Comme Santarém, Mirituba est une étape importante pour le transit des céréales et les bois précieux hors de de la forêt amazonienne.
 
-    [figure]
-      [img src:'static/images/barge.jpg' /]
-      [figcaption]*Barge pouvant transporter du soja.*[/figcaption]
-    [/figure]
-    [br/]
+      [figure]
+        [img src:'static/images/barge.jpg' /]
+        [figcaption]*Barge pouvant transporter du soja.*[/figcaption]
+      [/figure]
+      [br/]
 
-    Connectée aux routes majeures que sont la BR-163 et la BR-230, Mirituba constitue un terminus pour les camions. Ils déposent leurs marchandises dans des barges qui naviguent ensuite sur le rio Tapajós et rejoignent d’autres ports capables d’accueillir des navires cargos. C’est le cas du port de Barcarena.
+      Connectée aux routes majeures que sont la BR-163 et la BR-230, Mirituba constitue un terminus pour les camions. Ils déposent leurs marchandises dans des barges qui naviguent ensuite sur le rio Tapajós et rejoignent d’autres ports capables d’accueillir des navires cargos. C’est le cas du port de Barcarena.
 
-    [br/]
-    [figure]
-      [video src:'static/images/Miritituba-camions.mp4' controls:true autoPlay:true loop:true muted:true playsinline:true /]
-      [figcaption]*Camions de marchandises en attente, à proximité du port de Mirituba, 2019. Crédit : [Amazoni@zul](https://twitter.com/AmazoniaAzulBR/status/1168835361134534656)*[/figcaption]
-    [/figure]
+      [br/]
+      [figure]
+        [video src:'static/images/Miritituba-camions.mp4' controls:true autoPlay:true loop:true muted:true playsinline:true /]
+        [figcaption]*Camions de marchandises en attente, à proximité du port de Mirituba, 2019. Crédit : [Amazoni@zul](https://twitter.com/AmazoniaAzulBR/status/1168835361134534656)*[/figcaption]
+      [/figure]
+    [/div]
   [/Step]
 
   [Step]
-    // Step 4
-    Au Sud de Mirituba, les espaces protégés (forêts nationales, réserves et parcs nationaux) [span className:"legend" style:`{background: 'repeating-linear-gradient(-45deg, rgba(255,255,255,0.4), rgba(255,255,255,0.5) 1px, transparent 1px, transparent 6px)'}`][/span] sont supposés empêcher la déforestation. Les images satellites montrent cependant que des parcelles sont tout de même déboisées, tout au long de la route BR-163 et de son réseau secondaire.
+    [div className:"step-text"]
+      // Step 4
+      Au Sud de Mirituba, les espaces protégés (forêts nationales, réserves et parcs nationaux) [span className:"legend" style:`{background: 'repeating-linear-gradient(-45deg, rgba(255,255,255,0.4), rgba(255,255,255,0.5) 1px, transparent 1px, transparent 6px)'}`][/span] sont supposés empêcher la déforestation. Les images satellites montrent cependant que des parcelles sont tout de même déboisées, tout au long de la route BR-163 et de son réseau secondaire.
 
-    Cette déforestation à l’intérieur même des aires protégées s’explique par une réglementation trop laxiste et un contrôle inefficace des règles en place. Selon Greenpeace, l’exploitation illégale du bois est la cause principale de la déforestation : elle représenterait 60 à 80 % des arbres abattus en Amazonie.
-
+      Cette déforestation à l’intérieur même des aires protégées s’explique par une réglementation trop laxiste et un contrôle inefficace des règles en place. Selon Greenpeace, l’exploitation illégale du bois est la cause principale de la déforestation : elle représenterait 60 à 80 % des arbres abattus en Amazonie.
+    [/div]
   [/Step]
 
   [Step]
-    // Step 5
-    Il existe plusieurs niveaux de protection pour les aires protégées. Ces réglementations associent les acteurs locaux, nationaux et internationaux, afin de concilier la préservation de la nature et le développement des populations qui vivent dans ou à proximité de ces espaces.
+    [div className:"step-text"]
+      // Step 5
+      Il existe plusieurs niveaux de protection pour les aires protégées. Ces réglementations associent les acteurs locaux, nationaux et internationaux, afin de concilier la préservation de la nature et le développement des populations qui vivent dans ou à proximité de ces espaces.
 
-    Par exemple, le parc national de Jamanxim est soumis à une réglementation de catégorie II par l’Union internationale de conservation de la nature (UICN). Ce niveau est considéré comme peu strict : il autorise un développement économique modéré de l’espace protégé, et donc une déforestation partielle.
+      Par exemple, le parc national de Jamanxim est soumis à une réglementation de catégorie II par l’Union internationale de conservation de la nature (UICN). Ce niveau est considéré comme peu strict : il autorise un développement économique modéré de l’espace protégé, et donc une déforestation partielle.
 
-    Ainsi, cette exploitation économique de la forêt amazonienne est autant favorisée par le maillage des routes qui la traversent que par une réglementation relativement souple et peu appliquée – ces zones sont immenses – des aires protégées. Rappelons que les territoires indigènes et les aires protégées couvrent tout de même 34 % de l’Amazonie brésilienne.
-
+      Ainsi, cette exploitation économique de la forêt amazonienne est autant favorisée par le maillage des routes qui la traversent que par une réglementation relativement souple et peu appliquée – ces zones sont immenses – des aires protégées. Rappelons que les territoires indigènes et les aires protégées couvrent tout de même 34 % de l’Amazonie brésilienne.
+    [/div]
   [/Step]
 
   [Step]
-    // Step 6
-    Nous avons déjà parcouru 780 km depuis Santarém ! Nous arrivons à Novo Progresso, une ville nouvelle née avec la route BR-163.
+    [div className:"step-text"]
+      // Step 6
+      Nous avons déjà parcouru 780 km depuis Santarém ! Nous arrivons à Novo Progresso, une ville nouvelle née avec la route BR-163.
 
-    Peu après l’installation des premiers habitants, la découverte d’un gisement aurifère, au début des années 1980, ouvre une période de forte croissance démographique.
+      Peu après l’installation des premiers habitants, la découverte d’un gisement aurifère, au début des années 1980, ouvre une période de forte croissance démographique.
 
-    Novo Progresso est officiellement devenue une commune (município) en 1991. Elle voit sa population fortement augmenter jusque dans les années 2000 avant de se stabiliser. Le paysage forestier initial a quant à lui beaucoup changé.
+      Novo Progresso est officiellement devenue une commune (município) en 1991. Elle voit sa population fortement augmenter jusque dans les années 2000 avant de se stabiliser. Le paysage forestier initial a quant à lui beaucoup changé.
 
-    [figure]
-      ### Évolution de la population de Novo Progresso
-      [svg src:'static/images/pop-evo-novo-progresso.svg' /]
-      [figcaption]Source: Recensements de 1912 et 2010, [Instituto Brasileiro de Geografia e Estatística (IBGE)](https://www.ibge.gov.br/estatisticas/sociais/populacao/9103-estimativas-de-populacao.html).[/figcaption]
-    [/figure]
+      [figure]
+        ### Évolution de la population de Novo Progresso
+        [svg src:'static/images/pop-evo-novo-progresso.svg' /]
+        [figcaption]Source: Recensements de 1912 et 2010, [Instituto Brasileiro de Geografia e Estatística (IBGE)](https://www.ibge.gov.br/estatisticas/sociais/populacao/9103-estimativas-de-populacao.html).[/figcaption]
+      [/figure]
+    [/div]
   [/Step]
 
   [Step]
-    // Step 7
-    En comparant les images satellites dans le temps, il est possible de saisir la progression et l’ampleur de la déforestation entre 2001 et 2018 dans cette région de Novo Progresso.
+    [div className:"step-text"]
+      // Step 7
+      En comparant les images satellites dans le temps, il est possible de saisir la progression et l’ampleur de la déforestation entre 2001 et 2018 dans cette région de Novo Progresso.
 
-    Voici par exemple la destruction de couvert forestier entre 2001 et 2006 [span className:"legend" style:`{background:'rgb(155, 75, 21)'}`][/span].
+      Voici par exemple la destruction de couvert forestier entre 2001 et 2006 [span className:"legend" style:`{background:'rgb(155, 75, 21)'}`][/span].
 
-    *Attention, les zones déboisées avant 2001 apparaissent déjà en gris, comme le bâti, les données chronologiques pour cette analyse démarrent en 2001.*
-
+      *Attention, les zones déboisées avant 2001 apparaissent déjà en gris, comme le bâti, les données chronologiques pour cette analyse démarrent en 2001.*
+    [/div]
   [/Step]
 
   [Step]
-    // Step 8
-    Puis entre 2007 et 2012 [span className:"legend" style:`{background:'rgb(211, 95, 16)'}`][/span].
+    [div className:"step-text"]
+      // Step 8
+      Puis entre 2007 et 2012 [span className:"legend" style:`{background:'rgb(211, 95, 16)'}`][/span].
+    [/div]
   [/Step]
 
   [Step]
-    // Step 9
-    Et enfin entre 2013 et 2018 [span className:"legend" style:`{background:'rgb(227, 146, 0)'}`][/span].
+    [div className:"step-text"]
+      // Step 9
+      Et enfin entre 2013 et 2018 [span className:"legend" style:`{background:'rgb(227, 146, 0)'}`][/span].
+    [/div]
   [/Step]
 
   [Step]
-    // Step 10
-    En 2018, le Global Forest Watch estime que 120 000 km² de forêt tropicale primaire ont été détruits dans le monde. Cela équivaut à 3 fois la superficie de la Suisse. Face à de tels ordres de grandeur, il est difficile de saisir l’ampleur de cette déforestation.
-
+    [div className:"step-text"]
+      // Step 10
+      En 2018, le Global Forest Watch estime que 120 000 km² de forêt tropicale primaire ont été détruits dans le monde. Cela équivaut à 3 fois la superficie de la Suisse. Face à de tels ordres de grandeur, il est difficile de saisir l’ampleur de cette déforestation.
+    [/div]
   [/Step]
 
   [Step]
-    // Step 11
-    Basculons à une échelle plus locale pour une comparaison plus concrète.
+    [div className:"step-text"]
+      // Step 11
+      Basculons à une échelle plus locale pour une comparaison plus concrète.
 
-    Cette parcelle [span className:"legend" style:`{background:'rgb(255, 204, 0)'}`][/span] fait 105 km². Elle a été déboisée entre 2001 et 2018.
-
+      Cette parcelle [span className:"legend" style:`{background:'rgb(255, 204, 0)'}`][/span] fait 105 km². Elle a été déboisée entre 2001 et 2018.
+    [/div]
   [/Step]
 
   [Step]
-    // Step 12
-    105 km², c'est la superficie de Paris.
+    [div className:"step-text"]
+      // Step 12
+      105 km², c'est la superficie de Paris.
 
-    Les arrondissements de Paris [span className:"legend" style:`{background:'rgba(26, 248, 255, 0.7)'}`][/span] sont ici superposés à cette parcelle pour mieux rendre compte de l'échelle.
+      Les arrondissements de Paris [span className:"legend" style:`{background:'rgba(26, 248, 255, 0.7)'}`][/span] sont ici superposés à cette parcelle pour mieux rendre compte de l'échelle.
+    [/div]
   [/Step]
 
   [Step className:"hide"]
@@ -223,158 +255,162 @@
   [/Step]
 
   [Step]
-    // Step 14
-    Revenons à l’Amazonie brésilienne dans son ensemble. En combinant des comparaisons d’images satellites et l’analyse de l’occupation du sol, l'ONG MapBiomas quantifie la diminution du couvert forestier [span className:"legend-line" style:`{background:'rgb(125, 224, 55)'}`][/span] et l’accroissement des surfaces agricoles [span className:"legend-line" style:`{background:'rgb(178, 117, 255)'}`][/span]. C'est ce que montre le graphique ci-dessous entre 1985 et 2018.
+    [div className:"step-text"]
+      // Step 14
+      Revenons à l’Amazonie brésilienne dans son ensemble. En combinant des comparaisons d’images satellites et l’analyse de l’occupation du sol, l'ONG MapBiomas quantifie la diminution du couvert forestier [span className:"legend-line" style:`{background:'rgb(125, 224, 55)'}`][/span] et l’accroissement des surfaces agricoles [span className:"legend-line" style:`{background:'rgb(178, 117, 255)'}`][/span]. C'est ce que montre le graphique ci-dessous entre 1985 et 2018.
 
-    [figure]
-      ### Évolution du couvert forestier et des surfaces agricoles en Amazonie brésilienne, 1985-2018
-      *En millions de km²*
+      [figure]
+        ### Évolution du couvert forestier et des surfaces agricoles en Amazonie brésilienne, 1985-2018
+        *En millions de km²*
 
-      [data name:"landcover" source:"land-cover-amazonia-1985-2018.csv" /]
-      [IdyllVegaLite className:"vl-line" data:landcover spec:`{
-        "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
-        "background": "none",
-        "width": "container",
-        "height": 350,
-        "config": {
-          "legend": {
-            "title": null,
-            "orient": "top",
-            "direction": "vertical",
-            "labelLimit": 250
-          },
-          "axis": {
-            "title": "",
-            "domainColor": "white",
-            "gridColor": "white",
-            "gridOpacity": 0.3,
-            "tickColor": "white",
-            "labelFont": "Noto sans",
-            "labelColor": "white",
-            "labelFontSize": 15
-          }
-        },
-        "encoding": {"x": {"timeunit": "year", "field": "year", "type": "temporal"}},
-        "layer": [
-          {
-            "transform": [{"pivot": "class", "value": "surface", "groupby": ["year"]}],
-            "mark": "rule",
-            "encoding": {
-              "opacity": {
-                "condition": {"value": 0.3, "selection": "hover"},
-                "value": 0
-              },
-              "tooltip": [
-                {"field": "Forêt", "type": "quantitative"},
-                {"field": "Agriculture (dont pâturage)", "type": "quantitative"}
-              ]
+        [data name:"landcover" source:"land-cover-amazonia-1985-2018.csv" /]
+        [IdyllVegaLite className:"vl-line" data:landcover spec:`{
+          "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
+          "background": "none",
+          "width": "container",
+          "height": 350,
+          "config": {
+            "legend": {
+              "title": null,
+              "orient": "top",
+              "direction": "vertical",
+              "labelLimit": 250
             },
-            "selection": {
-              "hover": {
-                "type": "single",
-                "fields": ["year"],
-                "nearest": true,
-                "on": "mouseover",
-                "empty": "none",
-                "clear": "mouseout"
-              }
+            "axis": {
+              "title": "",
+              "domainColor": "white",
+              "gridColor": "white",
+              "gridOpacity": 0.3,
+              "tickColor": "white",
+              "labelFont": "Noto sans",
+              "labelColor": "white",
+              "labelFontSize": 15
             }
           },
-          {
-            "encoding": {
-              "color": {
-                "field": "class", "type": "nominal",
-                "scale": {"range": ["#b275ff", "#7de037"]}
+          "encoding": {"x": {"timeunit": "year", "field": "year", "type": "temporal"}},
+          "layer": [
+            {
+              "transform": [{"pivot": "class", "value": "surface", "groupby": ["year"]}],
+              "mark": "rule",
+              "encoding": {
+                "opacity": {
+                  "condition": {"value": 0.3, "selection": "hover"},
+                  "value": 0
                 },
-              "y": {"field": "surface", "type": "quantitative", "axis": {"tickCount": 4}}
+                "tooltip": [
+                  {"field": "Forêt", "type": "quantitative"},
+                  {"field": "Agriculture (dont pâturage)", "type": "quantitative"}
+                ]
+              },
+              "selection": {
+                "hover": {
+                  "type": "single",
+                  "fields": ["year"],
+                  "nearest": true,
+                  "on": "mouseover",
+                  "empty": "none",
+                  "clear": "mouseout"
+                }
+              }
             },
-            "layer": [
-              {"mark": {"type": "line", "strokeWidth": 4}},
-              {"transform": [{"filter": {"selection": "hover"}}], "mark": {"type": "circle", "size": 80}}
-            ]
-          }
-        ]
-      }` /]
-      [figcaption]Source : Projet MapBiomas, collection v4.0, [http://mapbiomas.org](http://mapbiomas.org).[/figcaption]
-    [/figure]
+            {
+              "encoding": {
+                "color": {
+                  "field": "class", "type": "nominal",
+                  "scale": {"range": ["#b275ff", "#7de037"]}
+                  },
+                "y": {"field": "surface", "type": "quantitative", "axis": {"tickCount": 4}}
+              },
+              "layer": [
+                {"mark": {"type": "line", "strokeWidth": 4}},
+                {"transform": [{"filter": {"selection": "hover"}}], "mark": {"type": "circle", "size": 80}}
+              ]
+            }
+          ]
+        }` /]
+        [figcaption]Source : Projet MapBiomas, collection v4.0, [http://mapbiomas.org](http://mapbiomas.org).[/figcaption]
+      [/figure]
 
-    [br/]
-    La symétrie des deux courbes est frappante : quand le couvert forestier perd 473 000 km² entre 1985 et 2018, les surfaces agricoles en gagnent 448 000 km². L’extension de l’agriculture, pour l’élevage bovin essentiellement, se fait au détriment de la forêt à un rythme quasi constant jusqu’en 2008 où un ralentissement devient visible.
+      [br/]
+      La symétrie des deux courbes est frappante : quand le couvert forestier perd 473 000 km² entre 1985 et 2018, les surfaces agricoles en gagnent 448 000 km². L’extension de l’agriculture, pour l’élevage bovin essentiellement, se fait au détriment de la forêt à un rythme quasi constant jusqu’en 2008 où un ralentissement devient visible.
+    [/div]
   [/Step]
 
   [Step]
-    // Step 15
-    En termes de superficies totales, la tendance de la déforestation en Amazonie brésilienne au cours des trente dernières années est la suivante : diminution à la fin des années 1980, puis augmentation jusqu'au pic de 2004, puis nette diminution au cours du mandat présidentiel de Lula (2003-2011) et enfin légère hausse depuis.
+    [div className:"step-text"]
+      // Step 15
+      En termes de superficies totales, la tendance de la déforestation en Amazonie brésilienne au cours des trente dernières années est la suivante : diminution à la fin des années 1980, puis augmentation jusqu'au pic de 2004, puis nette diminution au cours du mandat présidentiel de Lula (2003-2011) et enfin légère hausse depuis.
 
-    [figure]
-      ### Évolution de la déforestation, 1988-2019
-      *En milliers de km²*
+      [figure]
+        ### Évolution de la déforestation, 1988-2019
+        *En milliers de km²*
 
-      [data name:"inpe" source:"INPE-deforestation-1988-2019.csv" /]
-      [IdyllVegaLite data:inpe spec:`{
-        "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
-        "background": "none",
-        "width": "container",
-        "height": 350,
-        "config": {
-          "axis": {
-            "title": "",
-            "domainColor": "white",
-            "gridColor": "white",
-            "gridOpacity": 0.7,
-            "tickColor": "white",
-            "labelFont": "Noto sans",
-            "labelColor": "white",
-            "labelFontSize": 15
+        [data name:"inpe" source:"INPE-deforestation-1988-2019.csv" /]
+        [IdyllVegaLite data:inpe spec:`{
+          "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
+          "background": "none",
+          "width": "container",
+          "height": 350,
+          "config": {
+            "axis": {
+              "title": "",
+              "domainColor": "white",
+              "gridColor": "white",
+              "gridOpacity": 0.7,
+              "tickColor": "white",
+              "labelFont": "Noto sans",
+              "labelColor": "white",
+              "labelFontSize": 15
+            },
+            "axisX": {
+              "tickCount": 6,
+              "domainWidth": 2
+            }
           },
-          "axisX": {
-            "tickCount": 6,
-            "domainWidth": 2
-          }
-        },
-        "transform": [
-        {"calculate": "datum.areakm2 / 1000", "as": "areaThousandsKm2"}
-        ],
-        "encoding": {
-          "x": {"timeunit": "year", "field": "year", "type": "ordinal"},
-          "y": {"field": "areaThousandsKm2", "type": "quantitative",
-           "axis": {"tickCount": 4}},
-          "color": {"value": "#e39200"},
-          "tooltip": {"field": "areaThousandsKm2", "type": "quantitative"}
-        },
-        "layer": [{
-          "mark": "bar"
-        }, {
-          "mark": {
-            "type": "text",
-            "align": "center",
-            "baseline": "bottom",
-            "dy": -5,
-            "fontSize": 15
-          },
+          "transform": [
+          {"calculate": "datum.areakm2 / 1000", "as": "areaThousandsKm2"}
+          ],
           "encoding": {
-            "text": {"field": "areaThousandsKm2", "type": "quantitative", "format": "d"}
-          }
-        }]
-      }` /]
-      [figcaption]Source : Instituto Nacional de Pesquisas Espaciais, programme PRODES, [www.inpe.br](http://www.inpe.br/).[/figcaption]
-    [/figure]
+            "x": {"timeunit": "year", "field": "year", "type": "ordinal"},
+            "y": {"field": "areaThousandsKm2", "type": "quantitative",
+             "axis": {"tickCount": 4}},
+            "color": {"value": "#e39200"},
+            "tooltip": {"field": "areaThousandsKm2", "type": "quantitative"}
+          },
+          "layer": [{
+            "mark": "bar"
+          }, {
+            "mark": {
+              "type": "text",
+              "align": "center",
+              "baseline": "bottom",
+              "dy": -5,
+              "fontSize": 15
+            },
+            "encoding": {
+              "text": {"field": "areaThousandsKm2", "type": "quantitative", "format": "d"}
+            }
+          }]
+        }` /]
+        [figcaption]Source : Instituto Nacional de Pesquisas Espaciais, programme PRODES, [www.inpe.br](http://www.inpe.br/).[/figcaption]
+      [/figure]
 
-    [br/]
-    En cumulant les estimations sur toute la période, on obtient une perte de 12 % de surface pour la forêt amazonienne brésilienne entre 1988 et mi-2019.
+      [br/]
+      En cumulant les estimations sur toute la période, on obtient une perte de 12 % de surface pour la forêt amazonienne brésilienne entre 1988 et mi-2019.
 
-    Précisons cependant que ces estimations n’incluent pas systématiquement les pertes de couvert forestier liées aux feux de forêts. Or les incendies d'août et septembre 2019 ont montré l’impact de ces pratiques sur la déforestation.
-
+      Précisons cependant que ces estimations n’incluent pas systématiquement les pertes de couvert forestier liées aux feux de forêts. Or les incendies d'août et septembre 2019 ont montré l’impact de ces pratiques sur la déforestation.
+    [/div]
   [/Step]
 
 
 
   [Step]
-    // Step 16
-    Scientifiques, militants écologistes et défenseurs des droits autochtones alertent l’opinion publique mondiale sur la destruction de la forêt amazonienne depuis des décennies. Les objectifs de l’actuel président brésilien Jair Bolsonaro – accélérer l’exploitation forestière, minière et agricole en Amazonie – ont déjà des répercussions : la déforestation s’accélère. Sur place, les violences, les emprisonnements arbitraires et les assassinats se poursuivent contre les opposants à cette exploitation de la forêt quand les administrations locales et policières tolèrent voire soutiennent ces crimes.
+    [div className:"step-text"]
+      // Step 16
+      Scientifiques, militants écologistes et défenseurs des droits autochtones alertent l’opinion publique mondiale sur la destruction de la forêt amazonienne depuis des décennies. Les objectifs de l’actuel président brésilien Jair Bolsonaro – accélérer l’exploitation forestière, minière et agricole en Amazonie – ont déjà des répercussions : la déforestation s’accélère. Sur place, les violences, les emprisonnements arbitraires et les assassinats se poursuivent contre les opposants à cette exploitation de la forêt quand les administrations locales et policières tolèrent voire soutiennent ces crimes.
 
-    À un niveau planétaire, l’Amazonie rassemble les superficies de forêts primaires les plus importantes. Elle est dans le même temps la plus affectée par la déforestation. Or les scientifiques s’accordent sur son rôle central dans la régulation du climat et l’importance de sa biodiversité. Cette forêt capte par exemple de grandes quantités de carbone, davantage que les autres types de forêts. Les actions de reboisement, souvent en monoculture, ne compensent pas ces pertes.
-
+      À un niveau planétaire, l’Amazonie rassemble les superficies de forêts primaires les plus importantes. Elle est dans le même temps la plus affectée par la déforestation. Or les scientifiques s’accordent sur son rôle central dans la régulation du climat et l’importance de sa biodiversité. Cette forêt capte par exemple de grandes quantités de carbone, davantage que les autres types de forêts. Les actions de reboisement, souvent en monoculture, ne compensent pas ces pertes.
+    [/div]
   [/Step]
 
 [/Scroller]
