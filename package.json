@@ -19,7 +19,7 @@
     "idyll": "^4.0.0",
     "idyll-d3-component": "^2.0.0",
     "idyll-vega-lite": "^1.0.2",
-    "vega": "^5.9.0",
+    "vega": "^5.17.3",
     "vega-lite": "^4.0.0"
   },
   "devDependencies": {
